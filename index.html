@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Egg Plant — 3D งานที่ต้องทำ (roof off) | KPS × CPF</title>
+<style>
+  :root{--accent:#1F4E78;--gold:#c99700;--ink:#12233b}
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;font-family:'Segoe UI','Sarabun',Arial,sans-serif;background:#0d1420;overflow:hidden}
+  #app{position:fixed;inset:0}
+  .panel{position:absolute;background:rgba(255,255,255,.96);backdrop-filter:blur(7px);border-radius:13px;
+    box-shadow:0 10px 34px rgba(0,0,0,.4);color:var(--ink)}
+  #title{top:14px;left:14px;padding:12px 16px;max-width:330px}
+  #title h1{font-size:15px;color:var(--accent)}
+  #title .sub{font-size:11px;color:#54627a;margin-top:3px;line-height:1.35}
+  #title .badge{display:inline-block;margin-top:7px;background:var(--gold);color:#fff;font-size:10px;padding:3px 9px;border-radius:20px;font-weight:700}
+  #stats{top:14px;right:14px;padding:11px 13px;width:190px}
+  #stats h2{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--gold);margin-bottom:6px}
+  .stat{display:flex;justify-content:space-between;font-size:11.5px;padding:3px 0;border-bottom:1px dashed #dfe4ec}
+  .stat b{color:var(--accent)}
+  #legend{bottom:14px;left:14px;padding:11px 13px;width:250px;max-height:52vh;overflow:auto}
+  #legend h2{font-size:10.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--gold);margin-bottom:6px}
+  .leg{display:flex;align-items:center;gap:8px;font-size:11px;padding:3px 0;cursor:pointer;border-radius:6px}
+  .leg:hover{background:#eef3fa}
+  .sw{width:13px;height:13px;border-radius:3px;flex:0 0 13px;border:1px solid rgba(0,0,0,.15)}
+  #ctrls{bottom:14px;right:14px;padding:9px 11px;font-size:10.5px;color:#54627a;width:210px}
+  #ctrls b{color:var(--accent)}
+  .btnrow{display:flex;gap:6px;margin-top:7px;flex-wrap:wrap}
+  .btn{background:var(--accent);color:#fff;border:none;border-radius:7px;padding:5px 9px;font-size:10.5px;cursor:pointer}
+  .btn.alt{background:#e7edf5;color:var(--accent)}
+  #tip{position:absolute;pointer-events:none;background:var(--ink);color:#fff;font-size:11px;padding:6px 10px;
+    border-radius:7px;opacity:0;transition:opacity .1s;white-space:nowrap;transform:translate(-50%,-150%);max-width:260px}
+  #flag{bottom:14px;left:50%;transform:translateX(-50%);background:#c0392b;color:#fff;font-size:10.5px;
+    padding:6px 13px;border-radius:20px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+</style>
+</head>
+<body>
+<div id="app"></div><div id="tip"></div>
+<div class="panel" id="title">
+  <h1>โรงไข่ต้ม — 3D งานที่ต้องทำ (เปิดหลังคา)</h1>
+  <div class="sub">Fit-out อาคารเดิม 10 × 19.5 m · San Miguel, Bulacan · Tenant <b>CPF</b> · <b>KPS</b></div>
+  <div class="badge">เปิดหลังคาเพื่อดูภายใน · concept</div>
+</div>
+<div class="panel" id="stats">
+  <h2>ตัวเลขหลัก</h2>
+  <div class="stat"><span>กำลังผลิต</span><b>36,000 ฟอง/วัน</b></div>
+  <div class="stat"><span>บ่อต้ม</span><b>1×2 m · 38 kW</b></div>
+  <div class="stat"><span>บ่อแช่</span><b>0 °C × 2 (glycol)</b></div>
+  <div class="stat"><span>ไฟฟ้า</span><b>~94 kVA</b></div>
+  <div class="stat"><span>น้ำ (RO)</span><b>~10 m³/วัน</b></div>
+</div>
+<div class="panel" id="legend"><h2>งานที่ต้องทำ — คลิกเพื่อโฟกัส</h2><div id="legitems"></div></div>
+<div class="panel" id="ctrls"><b>ลาก</b> หมุน · <b>สกอลล์</b> ซูม · <b>คลิกขวา-ลาก</b> เลื่อน
+  <div class="btnrow"><button class="btn" id="bReset">รีเซ็ต</button>
+  <button class="btn alt" id="bWalls">ผนัง: โปร่ง</button>
+  <button class="btn alt" id="bTop">มุมบน</button></div>
+</div>
+<div id="flag">⚠ ยืนยันกับ CPF: อุณหภูมิห้องเก็บ (แบบระบุ 18°C — RTE ควร 0–4°C) &amp; ตรวจน้ำเค็มก่อนสรุป RO</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const S=THREE;
+const scene=new S.Scene();scene.background=new S.Color(0x0d1420);
+const camera=new S.PerspectiveCamera(42,innerWidth/innerHeight,0.1,900);
+const renderer=new S.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true;renderer.shadowMap.type=S.PCFSoftShadowMap;
+renderer.outputEncoding=S.sRGBEncoding;renderer.toneMapping=S.ACESFilmicToneMapping;renderer.toneMappingExposure=1.12;
+document.getElementById('app').appendChild(renderer.domElement);
+
+// lighting
+const hemi=new S.HemisphereLight(0xdfeeff,0x2a3340,0.85);scene.add(hemi);
+const sun=new S.DirectionalLight(0xfff4e6,1.15);sun.position.set(16,30,12);sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);const dd=26;Object.assign(sun.shadow.camera,{left:-dd,right:dd,top:dd,bottom:-dd,near:1,far:110});
+sun.shadow.bias=-0.0003;scene.add(sun);
+const fill=new S.DirectionalLight(0xbcd4ff,0.35);fill.position.set(-14,10,-8);scene.add(fill);
+
+// ground with subtle grid (concrete)
+function concreteTex(){const c=document.createElement('canvas');c.width=c.height=512;const x=c.getContext('2d');
+  x.fillStyle='#3a4657';x.fillRect(0,0,512,512);x.strokeStyle='#333e4d';x.lineWidth=2;
+  for(let i=0;i<=512;i+=64){x.beginPath();x.moveTo(i,0);x.lineTo(i,512);x.moveTo(0,i);x.lineTo(512,i);x.stroke();}
+  const t=new S.CanvasTexture(c);t.wrapS=t.wrapT=S.RepeatWrapping;t.repeat.set(8,8);return t;}
+const grnd=new S.Mesh(new S.PlaneGeometry(160,160),new S.MeshStandardMaterial({map:concreteTex(),roughness:1,metalness:0}));
+grnd.rotation.x=-Math.PI/2;grnd.receiveShadow=true;scene.add(grnd);
+
+// building floor (epoxy tile)
+function tileTex(){const c=document.createElement('canvas');c.width=c.height=256;const x=c.getContext('2d');
+  x.fillStyle='#eef2f6';x.fillRect(0,0,256,256);x.strokeStyle='#d5dde6';x.lineWidth=3;x.strokeRect(0,0,256,256);
+  const t=new S.CanvasTexture(c);t.wrapS=t.wrapT=S.RepeatWrapping;t.repeat.set(20,10);return t;}
+const BW=19.5,BD=10;
+const floor=new S.Mesh(new S.BoxGeometry(BW,0.25,BD),new S.MeshStandardMaterial({map:tileTex(),roughness:.55,metalness:.05}));
+floor.position.y=0.125;floor.receiveShadow=true;scene.add(floor);
+// perimeter trench (existing)
+[[0,BD/2+0.35],[0,-BD/2-0.35]].forEach(p=>{const t=new S.Mesh(new S.BoxGeometry(BW+1,0.12,0.35),new S.MeshStandardMaterial({color:0x707a86}));t.position.set(p[0],0.06,p[1]);scene.add(t);});
+
+// materials
+const M={
+  ss:new S.MeshStandardMaterial({color:0xd7dde3,metalness:0.85,roughness:0.32}),
+  ssDark:new S.MeshStandardMaterial({color:0x9aa4ad,metalness:0.8,roughness:0.4}),
+  water:new S.MeshStandardMaterial({color:0x2b8fd0,metalness:0.1,roughness:0.15,transparent:true,opacity:0.8}),
+  waterHot:new S.MeshStandardMaterial({color:0x8fbfe0,metalness:0.1,roughness:0.1,transparent:true,opacity:0.75}),
+  panel:new S.MeshStandardMaterial({color:0xf2f5f8,roughness:0.7,metalness:0.02}),
+};
+const picks=[];const legHost=document.getElementById('legitems');
+function addLeg(name,color,fn){const el=document.createElement('div');el.className='leg';
+  el.innerHTML=`<span class="sw" style="background:#${color.toString(16).padStart(6,'0')}"></span>${name}`;el.onclick=fn;legHost.appendChild(el);}
+function box(w,h,dp,mat,x,y,z,name,desc){const m=new S.Mesh(new S.BoxGeometry(w,h,dp),mat.clone?mat.clone():mat);
+  m.position.set(x,y+h/2,z);m.castShadow=true;m.receiveShadow=true;scene.add(m);
+  if(name){m.userData={name,desc};picks.push(m);}return m;}
+function cyl(r,h,mat,x,y,z,name,desc){const m=new S.Mesh(new S.CylinderGeometry(r,r,h,28),mat.clone?mat.clone():mat);
+  m.position.set(x,y+h/2,z);m.castShadow=true;m.receiveShadow=true;scene.add(m);if(name){m.userData={name,desc};picks.push(m);}return m;}
+function label(t,x,y,z,sc=1,bg='#1F4E78'){const c=document.createElement('canvas');const ct=c.getContext('2d');
+  const fs=42;ct.font=`bold ${fs}px Segoe UI,Arial`;const w=ct.measureText(t).width;c.width=w+34;c.height=fs+22;
+  ct.font=`bold ${fs}px Segoe UI,Arial`;ct.fillStyle=bg;rr(ct,0,0,c.width,c.height,15);ct.fill();
+  ct.fillStyle='#fff';ct.textBaseline='middle';ct.fillText(t,17,c.height/2+1);
+  const tex=new S.CanvasTexture(c);tex.anisotropy=8;const sp=new S.Sprite(new S.SpriteMaterial({map:tex,depthTest:false}));
+  sp.scale.set(c.width/c.height*sc,sc,1);sp.position.set(x,y,z);sp.renderOrder=999;scene.add(sp);return sp;}
+function rr(ct,x,y,w,h,r){ct.beginPath();ct.moveTo(x+r,y);ct.arcTo(x+w,y,x+w,y+h,r);ct.arcTo(x+w,y+h,x,y+h,r);
+  ct.arcTo(x,y+h,x,y,r);ct.arcTo(x,y,x+w,y,r);ct.closePath();}
+
+// ---- partition walls (semi-transparent, roof OFF) ----
+const wallH=2.7;let wallMats=[];
+function wall(x0,z0,x1,z1,color){const len=Math.hypot(x1-x0,z1-z0);
+  const mat=new S.MeshStandardMaterial({color,transparent:true,opacity:0.30,roughness:0.6,side:S.DoubleSide});
+  wallMats.push(mat);
+  const m=new S.Mesh(new S.BoxGeometry(len,wallH,0.12),mat);
+  m.position.set((x0+x1)/2,0.25+wallH/2,(z0+z1)/2);m.rotation.y=-Math.atan2(z1-z0,x1-x0);m.castShadow=true;scene.add(m);
+  // colored skirting base (solid)
+  const base=new S.Mesh(new S.BoxGeometry(len,0.5,0.14),new S.MeshStandardMaterial({color,roughness:.7}));
+  base.position.set((x0+x1)/2,0.25+0.25,(z0+z1)/2);base.rotation.y=m.rotation.y;scene.add(base);}
+// outer shell walls (light)
+const outer=0xcfd8e2;
+wall(-9.75,-5,9.75,-5,outer);wall(-9.75,5,9.75,5,outer);wall(-9.75,-5,-9.75,5,outer);wall(9.75,-5,9.75,5,outer);
+// room dividers (colored)
+const cTemper=0xf6c34d,cBoil=0xe8663f,cCool=0x36a2d6,cPack=0x2a9d8f;
+wall(-5.75,-5,-5.75,5,cTemper);   // temper|boil
+wall(-1.25,-5,-1.25,5,cBoil);     // boil|cool
+wall(3.25,-5,3.25,5,cCool);       // cool|pack
+
+// ---- TEMPERING ROOM: pallet stacks of egg trays ----
+function palletStack(x,z){const g=new S.Group();
+  box(1.0,0.15,1.2,M.ssDark,x,0,z); // pallet
+  for(let i=0;i<6;i++){box(1.0,0.28,1.2,new S.MeshStandardMaterial({color:0xe8b84b,roughness:.8}),x,0.15+i*0.3,z);}
+  return g;}
+palletStack(-8.6,-2.6);palletStack(-8.6,0);palletStack(-8.6,2.6);
+box(0.9,1.2,0.15,new S.MeshStandardMaterial({color:0xf6c34d,roughness:.6}),-6.4,0,-4.4,'ห้องบ่มไข่ (Tempering)','อุ่นไข่ก่อนต้ม · เก็บ 3 พาเลท 36,000 ฟอง · ฮีตเตอร์ 5 kW');
+label('ห้องบ่มไข่',-8.0,3.4,0,0.95,'#b8860b');
+addLeg('ห้องบ่มไข่ + racking (5 kW)',cTemper,()=>focus(-8,-2.6));
+
+// ---- BOILING ROOM: SS tank 1x2 + basket + steam + hood/exhaust ----
+const tankX=-3.5,tankZ=0;
+box(1.2,1.1,2.2,M.ss,tankX,0.25,tankZ,'บ่อต้ม SS316 1×2 m','ฮีตเตอร์ 38 kW · ต้ม 1,200 ฟอง/รอบ 10 นาที');
+box(1.0,0.15,2.0,M.waterHot,tankX,1.28,tankZ); // water surface
+box(0.85,0.9,1.7,M.ssDark,tankX,0.55,tankZ);   // basket
+// davit/hoist
+box(0.12,2.4,0.12,M.ssDark,tankX-0.8,0.25,tankZ-1.0);
+box(1.0,0.12,0.12,M.ssDark,tankX-0.35,2.5,tankZ-1.0);
+// steam sprites
+const steamMat=new S.SpriteMaterial({color:0xffffff,opacity:0.32,transparent:true,depthWrite:false});
+const steams=[];for(let i=0;i<10;i++){const s=new S.Sprite(steamMat.clone());s.scale.set(0.7,0.7,1);
+  s.position.set(tankX+(Math.random()-.5)*0.9,1.5+Math.random()*1.2,tankZ+(Math.random()-.5)*1.8);steams.push(s);scene.add(s);}
+// exhaust fan on wall + hood
+box(0.9,0.9,0.25,M.ssDark,tankX,2.3,-4.85,'พัดลมดูดอากาศ + ฮูด','ระบาย ~6,000 m³/h ไอน้ำ/ความร้อน 100°C');
+box(1.6,0.2,2.4,M.ssDark,tankX,2.6,tankZ); // hood
+label('บ่อต้ม 38kW',tankX,3.1,tankZ,0.9,'#c0392b');
+addLeg('บ่อต้ม SS316 + ฮีตเตอร์ 38 kW',cBoil,()=>focus(tankX,tankZ));
+addLeg('ระบบระบายอากาศห้องต้ม',0x8592a0,()=>focus(tankX,-4));
+
+// ---- COOLING ROOM: 2 chill pools ----
+function pool(x,z,name){box(1.2,0.9,1.9,M.ss,x,0.25,z,name,'บ่อแช่ 0°C · glycol · 30 นาที');
+  box(1.0,0.12,1.7,M.water,x,1.05,z);}
+pool(0.4,-2.4,'บ่อแช่ 1 (0°C)');pool(0.4,2.4,'บ่อแช่ 2 (0°C)');
+label('บ่อแช่ 0°C',0.4,1.9,0,0.85,'#0277bd');
+addLeg('บ่อแช่ 0°C × 2 (glycol)',cCool,()=>focus(0.4,0));
+// chiller pipes marker
+box(0.3,0.3,4.6,M.ssDark,0.4,0.9,0);
+
+// ---- PACK ROOM (insulated) : tables + workers ----
+box(0.12,wallH,10,new S.MeshStandardMaterial({color:cPack,transparent:true,opacity:0.14,roughness:.6,side:S.DoubleSide}),9.6,0.25+wallH/2,0); // extra insulated feel
+function table(x,z){box(2.2,0.85,1.0,M.ss,x,0.25,z,'โต๊ะแพ็ค SS','บรรจุมือ กล่อง 2 ฟอง');}
+table(6.3,-2.6);table(6.3,0);table(6.3,2.6);
+function worker(x,z){const g=new S.Group();const col=0x2a6f97;
+  const body=new S.Mesh(new S.CylinderGeometry(0.22,0.26,0.8,12),new S.MeshStandardMaterial({color:0xeef2f6,roughness:.8}));
+  body.position.set(x,1.05,z);body.castShadow=true;scene.add(body);
+  const head=new S.Mesh(new S.SphereGeometry(0.16,16,16),new S.MeshStandardMaterial({color:0xe0b48c,roughness:.7}));
+  head.position.set(x,1.62,z);scene.add(head);
+  const cap=new S.Mesh(new S.SphereGeometry(0.17,16,8,0,6.3,0,1.2),new S.MeshStandardMaterial({color:0x2a6f97}));
+  cap.position.set(x,1.66,z);scene.add(cap);}
+worker(5.3,-2.6);worker(5.3,0);worker(5.3,2.6);worker(7.4,-1.3);
+box(0.9,1.2,0.15,new S.MeshStandardMaterial({color:cPack,roughness:.6}),8.5,0,-4.4,'ห้องแพ็ค (10–18°C, บุฉนวน)','บรรจุมือ · แอร์ ~3 TR · ต้องบุฉนวน PU กันเหงื่อ');
+label('ห้องแพ็ค (บุฉนวน)',6.6,3.3,0,0.9,'#1f7a6b');
+addLeg('ห้องแพ็ค + แอร์ + ฉนวน PU',cPack,()=>focus(6.5,0));
+
+// ---- ROOM UNIT COOLERS (evaporators / air coolers, wall-mounted) ----
+const ucMat=new S.MeshStandardMaterial({color:0xeaf1f6,metalness:.5,roughness:.4});
+function unitCooler(x,z,name,desc){
+  const body=box(1.6,0.55,0.5,ucMat,x,1.95,z,name,desc);          // high on wall
+  for(const dx of [-0.45,0.0,0.45]){                              // fan grilles facing room (+z)
+    const fan=new S.Mesh(new S.CylinderGeometry(0.19,0.19,0.06,20),M.ssDark);
+    fan.rotation.x=Math.PI/2; fan.position.set(x+dx,2.225,z+0.28); fan.castShadow=true; scene.add(fan);
+  }
+  box(0.05,1.7,0.05,M.ssDark,x+0.7,0.25,z);                       // condensate drain line to floor
+  return body;
+}
+unitCooler(0.4,-4.35,'Unit cooler ห้องบ่อแช่ ~2 TR','glycol air cooler + ท่อน้ำทิ้ง · คุมอุณหภูมิ/ความชื้นรอบบ่อ 0°C');
+label('Unit cooler ~2TR',0.4,2.75,-4.35,0.7,'#2e6f96');
+addLeg('Unit cooler ห้องบ่อแช่ ~2 TR',0x6aa0c0,()=>focus(0.4,-4.35));
+unitCooler(8.4,-4.35,'Unit cooler ห้องแพ็ค ~2 TR','DX/air cooler ~2 TR + ท่อน้ำทิ้ง (10–18°C, บุฉนวน)');
+label('Unit cooler ~2TR',8.4,2.75,-4.35,0.7,'#1f7a6b');
+addLeg('Unit cooler ห้องแพ็ค ~2 TR',0x2a9d8f,()=>focus(8.4,-4.35));
+
+// ---- OUTSIDE PLANT ----
+// reefer container
+box(2.6,2.7,6.0,new S.MeshStandardMaterial({color:0xcdd3d8,metalness:.5,roughness:.5}),12.6,0.25,-1.4,'ตู้แช่ reefer (0–4°C)','ห้องเย็นเก็บสินค้า · ตู้คอนเทนเนอร์');
+for(let i=-1;i<=1;i++)box(2.62,2.5,0.06,M.ssDark,12.6,1.5,-1.4+i*2); // container ribs
+label('ตู้แช่ reefer',12.6,3.3,-1.4,0.85,'#c0392b');
+addLeg('ตู้แช่ reefer (0–4°C)',0xc0392b,()=>focus(12.6,-1.4));
+// chiller
+box(2.6,1.9,2.2,new S.MeshStandardMaterial({color:0x577590,metalness:.4,roughness:.5}),0.4,0.25,7.2,'ชิลเลอร์ glycol ~12 TR','ทำน้ำบ่อ 0°C + ice-bank');
+cyl(0.5,0.4,M.ssDark,-0.5,2.15,7.2);cyl(0.5,0.4,M.ssDark,1.3,2.15,7.2); // fans
+label('ชิลเลอร์ 12TR',0.4,2.7,7.2,0.8,'#3d5a70');
+addLeg('ชิลเลอร์ glycol 12 TR + ice-bank',0x577590,()=>focus(0.4,7.2));
+// RO skid + tanks
+cyl(0.7,2.2,M.panel,-4.5,0.25,7.0,'ถังเก็บน้ำ RO','น้ำ ~10 m³/วัน');
+cyl(0.7,2.2,M.panel,-3.0,0.25,7.0,'ถังน้ำดิบ','ก่อนบำบัด');
+box(1.8,1.5,0.9,new S.MeshStandardMaterial({color:0x6aa0c0,metalness:.4,roughness:.5}),-6.2,0.25,7.0,'ระบบ RO น้ำเค็ม (BWRO)','กรอง+RO+UV · น้ำเค็ม→น้ำใช้');
+label('RO น้ำเค็ม',-5.2,2.4,7.0,0.8,'#2e6f96');
+addLeg('ระบบ RO น้ำเค็ม + ถังเก็บ',0x6aa0c0,()=>focus(-5,7.0));
+// electrical MDB / transformer
+box(1.4,2.0,1.0,new S.MeshStandardMaterial({color:0x8c6a44,metalness:.3,roughness:.6}),-8.5,0.25,7.2,'ตู้ MDB + หม้อแปลง ≥125 kVA','อัปเกรดจาก ~24 kVA เดิม');
+label('ไฟ 125 kVA',-8.5,2.5,7.2,0.75,'#6b4a24');
+addLeg('อัปเกรดไฟฟ้า ≥125 kVA + MDB',0x8c6a44,()=>focus(-8.5,7.2));
+// partitions scope legend entry
+addLeg('กั้นห้อง + ฉนวน (ตามเส้นแดง)',outer,()=>focus(0,0));
+
+// flow arrows
+let flowGroup=new S.Group();scene.add(flowGroup);
+const pts=[[-8.6,0,3.0],[-3.5,0,3.0],[0.4,-2.4,2.2],[6.3,0,2.2],[12.6,-1.4,2.6]];
+for(let i=0;i<pts.length-1;i++){const a=new S.Vector3(pts[i][0],pts[i][2],pts[i][1]),b=new S.Vector3(pts[i+1][0],pts[i+1][2],pts[i+1][1]);
+  const dir=b.clone().sub(a);flowGroup.add(new S.ArrowHelper(dir.clone().normalize(),a,dir.length(),0xffd166,0.85,0.55));}
+
+label('อาคารเดิม 10 × 19.5 m — เปิดหลังคาดูภายใน',1,5.4,0,1.3);
+
+// ---------- controls ----------
+let theta=0.85,phi=0.78,radius=32,target=new S.Vector3(1.5,1,0.6);
+function upd(){camera.position.set(target.x+radius*Math.sin(phi)*Math.cos(theta),target.y+radius*Math.cos(phi),
+  target.z+radius*Math.sin(phi)*Math.sin(theta));camera.lookAt(target);}upd();
+let drag=false,pan=false,px=0,py=0;const el=renderer.domElement;
+el.addEventListener('mousedown',e=>{drag=e.button===0;pan=e.button===2;px=e.clientX;py=e.clientY;});
+addEventListener('mouseup',()=>drag=pan=false);
+addEventListener('mousemove',e=>{const dx=e.clientX-px,dy=e.clientY-py;px=e.clientX;py=e.clientY;
+  if(drag){theta+=dx*0.005;phi=Math.max(0.12,Math.min(1.45,phi+dy*0.005));upd();}
+  else if(pan){const s=radius*0.0012;const rx=new S.Vector3(Math.sin(theta+Math.PI/2),0,-Math.cos(theta+Math.PI/2));
+    target.addScaledVector(rx,-dx*s);target.y+=dy*s;upd();}else hover(e);});
+el.addEventListener('contextmenu',e=>e.preventDefault());
+el.addEventListener('wheel',e=>{e.preventDefault();radius=Math.max(10,Math.min(75,radius+e.deltaY*0.03));upd();},{passive:false});
+const ray=new S.Raycaster();const m2=new S.Vector2();const tip=document.getElementById('tip');let hi=null;
+function hover(e){m2.x=(e.clientX/innerWidth)*2-1;m2.y=-(e.clientY/innerHeight)*2+1;ray.setFromCamera(m2,camera);
+  const h=ray.intersectObjects(picks,false);
+  if(hi){hi.material.emissive&&hi.material.emissive.setHex(0);hi=null;}
+  if(h.length){hi=h[0].object;hi.material.emissive&&hi.material.emissive.setHex(0x2a2a2a);
+    tip.style.opacity=1;tip.style.left=e.clientX+'px';tip.style.top=e.clientY+'px';
+    tip.innerHTML=`<b>${hi.userData.name}</b><br>${hi.userData.desc}`;}else tip.style.opacity=0;}
+function focus(x,z){target.set(x,1,z);radius=14;upd();}
+document.getElementById('bReset').onclick=()=>{theta=0.85;phi=0.78;radius=32;target.set(1.5,1,0.6);upd();};
+document.getElementById('bTop').onclick=()=>{theta=Math.PI/2;phi=0.16;radius=34;target.set(1.5,1,0);upd();};
+let wallsSolid=false;document.getElementById('bWalls').onclick=e=>{wallsSolid=!wallsSolid;
+  wallMats.forEach(m=>m.opacity=wallsSolid?0.85:0.30);e.target.textContent='ผนัง: '+(wallsSolid?'ทึบ':'โปร่ง');};
+addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight);});
+let tk=0;(function loop(){requestAnimationFrame(loop);tk+=0.016;
+  steams.forEach((s,i)=>{s.position.y+=0.006+ i*0.0003;s.material.opacity=0.32*(1-((s.position.y-1.5)/1.8));
+    if(s.position.y>3.3){s.position.y=1.5;s.material.opacity=0.32;}});
+  renderer.render(scene,camera);})();
+</script>
+</body>
+</html>
