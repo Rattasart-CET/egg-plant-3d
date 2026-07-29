@@ -211,25 +211,25 @@ addLeg('Unit cooler ห้องแพ็ค ~2 TR',0x2a9d8f,()=>focus(8.4,-4.35
 
 // ---- OUTSIDE PLANT ----
 // reefer container
-box(2.6,2.7,6.0,new S.MeshStandardMaterial({color:0xcdd3d8,metalness:.5,roughness:.5}),-12.6,0.25,-1.4,'ตู้แช่ reefer (0–4°C)','ห้องเย็นเก็บสินค้า · ตู้คอนเทนเนอร์');
-for(let i=-1;i<=1;i++)box(2.62,2.5,0.06,M.ssDark,-12.6,1.5,-1.4+i*2); // container ribs
-label('ตู้แช่ reefer',-12.6,3.3,-1.4,0.85,'#c0392b');
-addLeg('ตู้แช่ reefer (0–4°C)',0xc0392b,()=>focus(-12.6,-1.4));
+box(2.6,2.7,6.0,new S.MeshStandardMaterial({color:0xcdd3d8,metalness:.5,roughness:.5}),-12.6,0.25,1.6,'ตู้แช่ reefer (0–4°C)','ห้องเย็นเก็บสินค้า · ตู้คอนเทนเนอร์');
+for(let i=-1;i<=1;i++)box(2.62,2.5,0.06,M.ssDark,-12.6,1.5,1.6+i*2); // container ribs
+label('ตู้แช่ reefer',-12.6,3.3,1.6,0.85,'#c0392b');
+addLeg('ตู้แช่ reefer (0–4°C)',0xc0392b,()=>focus(-12.6,1.6));
 // chiller
-box(2.6,1.9,2.2,new S.MeshStandardMaterial({color:0x577590,metalness:.4,roughness:.5}),0.4,0.25,7.2,'ชิลเลอร์ glycol ~12 TR','ทำน้ำบ่อ 0°C + ice-bank');
-cyl(0.5,0.4,M.ssDark,-0.5,2.15,7.2);cyl(0.5,0.4,M.ssDark,1.3,2.15,7.2); // fans
-label('ชิลเลอร์ 12TR',0.4,2.7,7.2,0.8,'#3d5a70');
-addLeg('ชิลเลอร์ glycol 12 TR + ice-bank',0x577590,()=>focus(0.4,7.2));
+box(2.6,1.9,2.2,new S.MeshStandardMaterial({color:0x577590,metalness:.4,roughness:.5}),-16.5,0.25,0.0,'ชิลเลอร์ glycol ~12 TR','ทำน้ำบ่อ 0°C + ice-bank');
+cyl(0.5,0.4,M.ssDark,-17.4,2.15,0.0);cyl(0.5,0.4,M.ssDark,-15.6,2.15,0.0); // fans
+label('ชิลเลอร์ 12TR',-16.5,2.7,0.0,0.8,'#3d5a70');
+addLeg('ชิลเลอร์ glycol 12 TR + ice-bank',0x577590,()=>focus(-16.5,0.0));
 // RO skid + tanks
-cyl(0.7,2.2,M.panel,-4.5,0.25,7.0,'ถังเก็บน้ำ RO','น้ำ ~10 m³/วัน');
-cyl(0.7,2.2,M.panel,-3.0,0.25,7.0,'ถังน้ำดิบ','ก่อนบำบัด');
-box(1.8,1.5,0.9,new S.MeshStandardMaterial({color:0x6aa0c0,metalness:.4,roughness:.5}),-6.2,0.25,7.0,'ระบบ RO น้ำเค็ม (BWRO)','กรอง+RO+UV · น้ำเค็ม→น้ำใช้');
-label('RO น้ำเค็ม',-5.2,2.4,7.0,0.8,'#2e6f96');
-addLeg('ระบบ RO น้ำเค็ม + ถังเก็บ',0x6aa0c0,()=>focus(-5,7.0));
+cyl(0.7,2.2,M.panel,-15.3,0.25,1.8,'ถังเก็บน้ำ RO','น้ำ ~10 m³/วัน');
+cyl(0.7,2.2,M.panel,-15.3,0.25,3.0,'ถังน้ำดิบ','ก่อนบำบัด');
+box(1.8,1.5,0.9,new S.MeshStandardMaterial({color:0x6aa0c0,metalness:.4,roughness:.5}),-16.8,0.25,2.4,'ระบบ RO น้ำเค็ม (BWRO)','กรอง+RO+UV · น้ำเค็ม→น้ำใช้');
+label('RO น้ำเค็ม',-16.0,2.4,2.4,0.8,'#2e6f96');
+addLeg('ระบบ RO น้ำเค็ม + ถังเก็บ',0x6aa0c0,()=>focus(-16,2.4));
 // electrical MDB / transformer
-box(1.4,2.0,1.0,new S.MeshStandardMaterial({color:0x8c6a44,metalness:.3,roughness:.6}),-8.5,0.25,7.2,'ตู้ MDB + หม้อแปลง ≥125 kVA','อัปเกรดจาก ~24 kVA เดิม');
-label('ไฟ 125 kVA',-8.5,2.5,7.2,0.75,'#6b4a24');
-addLeg('อัปเกรดไฟฟ้า ≥125 kVA + MDB',0x8c6a44,()=>focus(-8.5,7.2));
+box(1.4,2.0,1.0,new S.MeshStandardMaterial({color:0x8c6a44,metalness:.3,roughness:.6}),-16.5,0.25,4.8,'ตู้ MDB + หม้อแปลง ≥125 kVA','อัปเกรดจาก ~24 kVA เดิม');
+label('ไฟ 125 kVA',-16.5,2.5,4.8,0.75,'#6b4a24');
+addLeg('อัปเกรดไฟฟ้า ≥125 kVA + MDB',0x8c6a44,()=>focus(-16.5,4.8));
 // partitions scope legend entry
 addLeg('กั้นห้อง + ฉนวน (ตามเส้นแดง)',outer,()=>focus(0,0));
 
